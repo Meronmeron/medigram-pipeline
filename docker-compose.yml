@@ -1,0 +1,143 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ethiopian_medical_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ethiopian_medical_db}
+      POSTGRES_USER: ${POSTGRES_USER:-medical_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-medical_user} -d ${POSTGRES_DB:-ethiopian_medical_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medical_network
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: ethiopian_medical_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medical_network
+
+  # Main Application
+  app:
+    build: .
+    container_name: ethiopian_medical_app
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-medical_user}:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/${POSTGRES_DB:-ethiopian_medical_db}
+      - REDIS_URL=redis://redis:6379
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./dbt:/app/dbt
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - medical_network
+
+  # Dagster Orchestration
+  dagster:
+    build: .
+    container_name: ethiopian_medical_dagster
+    command: ["dagster", "daemon", "start"]
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-medical_user}:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/${POSTGRES_DB:-ethiopian_medical_db}
+      - DAGSTER_HOME=/app/dagster_home
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./dbt:/app/dbt
+      - dagster_home:/app/dagster_home
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medical_network
+
+  # dbt Service for data transformations
+  dbt:
+    build: .
+    container_name: ethiopian_medical_dbt
+    working_dir: /app/dbt
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-medical_user}:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/${POSTGRES_DB:-ethiopian_medical_db}
+    volumes:
+      - ./dbt:/app/dbt
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medical_network
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: ethiopian_medical_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    networks:
+      - medical_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  dagster_home:
+    driver: local
+
+networks:
+  medical_network:
+    driver: bridge
