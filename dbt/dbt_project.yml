@@ -1,0 +1,197 @@
+name: 'ethiopian_medical'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'ethiopian_medical'
+
+# These configurations specify where dbt should look for different types of files.
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Configuring target-path
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Configuring models
+models:
+  ethiopian_medical:
+    # Config indicated by + and applies to all files under models/example/
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
+    tests:
+      +materialized: view
+      +schema: tests
+
+# Configuring seeds
+seeds:
+  ethiopian_medical:
+    +schema: seeds
+
+# Configuring snapshots
+snapshots:
+  ethiopian_medical:
+    +schema: snapshots
+
+# Configuring tests
+tests:
+  ethiopian_medical:
+    +schema: tests
+
+# Configuring analyses
+analyses:
+  ethiopian_medical:
+    +schema: analyses
+
+# Configuring macros
+macros:
+  ethiopian_medical:
+    +schema: macros
+
+# Configuring documentation
+docs-paths: ["docs"]
+
+# Configuring logs
+log-path: "logs"
+
+# Configuring packages
+packages-install-path: "dbt_packages"
+
+# Configuring vars
+vars:
+  # Project-level variables
+  project_name: "ethiopian_medical"
+  data_source: "telegram"
+  timezone: "Africa/Addis_Ababa"
+  
+  # Channel configurations
+  channels:
+    - "chemed"
+    - "lobelia4cosmetics"
+    - "tikvahpharma"
+  
+  # Medical keywords for analysis
+  medical_keywords:
+    - "medicine"
+    - "pharmaceutical"
+    - "health"
+    - "medical"
+    - "drugs"
+    - "treatment"
+    - "cosmetics"
+    - "beauty"
+    - "skincare"
+    - "makeup"
+    - "personal_care"
+    - "pharma"
+    - "healthcare"
+    - "medical_supplies"
+    - "equipment"
+    - "hospital"
+    - "clinic"
+
+# Configuring models with specific configurations
+models:
+  ethiopian_medical:
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ["staging"]
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts"]
+      dim:
+        +materialized: table
+        +schema: marts
+        +tags: ["dimensions"]
+      fct:
+        +materialized: table
+        +schema: marts
+        +tags: ["facts"]
+    tests:
+      +materialized: view
+      +schema: tests
+      +tags: ["tests"]
+
+# Configuring seeds
+seeds:
+  ethiopian_medical:
+    +schema: seeds
+    +tags: ["seeds"]
+
+# Configuring snapshots
+snapshots:
+  ethiopian_medical:
+    +schema: snapshots
+    +tags: ["snapshots"]
+
+# Configuring tests
+tests:
+  ethiopian_medical:
+    +schema: tests
+    +tags: ["tests"]
+
+# Configuring analyses
+analyses:
+  ethiopian_medical:
+    +schema: analyses
+    +tags: ["analyses"]
+
+# Configuring macros
+macros:
+  ethiopian_medical:
+    +schema: macros
+    +tags: ["macros"]
+
+# Configuring documentation
+docs-paths: ["docs"]
+
+# Configuring logs
+log-path: "logs"
+
+# Configuring packages
+packages-install-path: "dbt_packages"
+
+# Configuring vars
+vars:
+  # Project-level variables
+  project_name: "ethiopian_medical"
+  data_source: "telegram"
+  timezone: "Africa/Addis_Ababa"
+  
+  # Channel configurations
+  channels:
+    - "chemed"
+    - "lobelia4cosmetics"
+    - "tikvahpharma"
+  
+  # Medical keywords for analysis
+  medical_keywords:
+    - "medicine"
+    - "pharmaceutical"
+    - "health"
+    - "medical"
+    - "drugs"
+    - "treatment"
+    - "cosmetics"
+    - "beauty"
+    - "skincare"
+    - "makeup"
+    - "personal_care"
+    - "pharma"
+    - "healthcare"
+    - "medical_supplies"
+    - "equipment"
+    - "hospital"
+    - "clinic" 
